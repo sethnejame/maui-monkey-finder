@@ -1,36 +1,34 @@
-﻿using System.Net.WebSockets;
-using System.Text;
+﻿using System.Text;
+using System.Net.WebSockets;
 
 namespace XRPL.Core.Network;
 
 public class XrplClient
 {
-    private readonly string _xrplNetworkUrl;
-
-    public XrplClient(string xrplNetworkUrl)
+    private readonly ILogger<XrplClient> _logger;
+    public XrplClient(ILogger<XrplClient> logger)
     {
-        _xrplNetworkUrl = xrplNetworkUrl;   
+        _logger = logger;
     }
 
-    public async Task Connect()
+    public async Task Connect(string xrplNetworkUrl)
     {
-        do
+        using (var socket = new ClientWebSocket())
         {
-            using (var socket = new ClientWebSocket())
-                try
-                {
-                    await socket.ConnectAsync(new Uri(_xrplNetworkUrl), CancellationToken.None);
+            try
+            {
+                await socket.ConnectAsync(new Uri(xrplNetworkUrl), CancellationToken.None);
 
-                    await Send(socket, "data");
-                    await Receive(socket);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"An error occurred in the XRPL client: {ex}");
-                    // Do we need a logger in the background service AND the client?
-                    // _logger.LogError(ex, "XRPL client connection error");
-                }
-        } while (true);
+                _logger.LogInformation($"Connected to XRPL via url '{xrplNetworkUrl}'");
+
+                await Send(socket, "data");
+                await Receive(socket);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "XRPL client connection error");
+            }
+        }
     }
 
     static async Task Send(ClientWebSocket socket, string data)
