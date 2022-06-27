@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace CSharp.Websocket.Client.Requests
+namespace XRPL.Core.Request
 {
     public class PingRequest
     {
