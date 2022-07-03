@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Newtonsoft.Json;
+using XRPL.Core.Request;
 using System.Net.WebSockets;
 using System.Collections.Concurrent;
 
@@ -11,9 +12,7 @@ public class XrplClient : IDisposable
     private ClientWebSocket? _ws;
     private CancellationTokenSource? _cts;
     private static readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _responses = new();
-
     public int ReceiveBufferSize { get; set; } = 8192;
-
     public XrplClient(ILogger<XrplClient> logger)
     {
         _logger = logger;
@@ -57,11 +56,6 @@ public class XrplClient : IDisposable
         _cts = null;
     }
 
-    private async Task Send(ClientWebSocket socket, string data)
-    {
-        await socket.SendAsync(Encoding.UTF8.GetBytes(data), WebSocketMessageType.Text, true, CancellationToken.None);
-    }
-
     private async Task ReceiveLoop()
     {
         var loopToken = _cts.Token;
@@ -92,11 +86,12 @@ public class XrplClient : IDisposable
         }
     }
 
-    public async Task SendMessageAsync(object data)
+    public async Task SendMessageAsync<TRequest>(TRequest data) 
+        where TRequest : RequestBase 
     {
         try
         {
-            var request = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data));
+            var request = CreateRequest(data);
             var buffer = new ArraySegment<Byte>(request, 0, request.Length);
             await _ws.SendAsync(buffer, WebSocketMessageType.Text, true, _cts.Token);
         }
@@ -118,6 +113,14 @@ public class XrplClient : IDisposable
             result = sw.ReadToEnd();
             inputStream.Dispose();
         }
+    }
+
+    private byte[] CreateRequest<TRequest>(TRequest request) 
+        where TRequest : RequestBase
+    {
+        request.Id = Guid.NewGuid().ToString();
+        request.Command = "ping"; // TODO-Remove me, this should be set before getting here
+        return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(request));
     }
 
     public void Dispose() => DisconnectAsync().Wait();

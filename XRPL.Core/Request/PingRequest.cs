@@ -2,11 +2,7 @@
 
 namespace XRPL.Core.Request
 {
-    public class PingRequest
+    public class PingRequest : RequestBase
     {
-        [JsonProperty("id")]
-        public int Id { get; set; } = 1;
-        [JsonProperty("command")]
-        public string Command { get; set; } = "ping";
     }
 }

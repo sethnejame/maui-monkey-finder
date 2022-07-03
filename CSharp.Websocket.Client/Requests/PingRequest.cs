@@ -5,7 +5,7 @@ namespace CSharp.Websocket.Client.Requests
     public class PingRequest
     {
         [JsonProperty("id")]
-        public int Id { get; set; } = 12;
+        public string Id { get; set; } = Guid.NewGuid().ToString();
         [JsonProperty("command")]
         public string Command { get; set; } = "ping";
     }
