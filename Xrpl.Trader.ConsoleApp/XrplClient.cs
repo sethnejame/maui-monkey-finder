@@ -2,9 +2,10 @@
 #pragma warning disable CS8603
 using WebSocketSharp;
 using Newtonsoft.Json;
-using AustinHarris.JsonRpc;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using Xrpl.Trader.ConsoleApp.Request;
+using Xrpl.Trader.ConsoleApp.Response;
 
 namespace Xrpl.Trader.ConsoleApp;
 
@@ -23,7 +24,7 @@ public class XrplClient
         _logger = logger;
     }
 
-    public JsonRequest CreateRequest(string method, object data)
+    public TRequest CreateRequest<TRequest>(TRequest data) where TRequest : RequestBase
     {
         // Get the next available request ID
         var nextRequestId = Interlocked.Increment(ref _requestId);
@@ -36,10 +37,12 @@ public class XrplClient
             nextRequestId = Interlocked.Increment(ref _requestId);
         }
 
-        return new JsonRequest(method, data, nextRequestId);
+        data.Id = nextRequestId;
+
+        return data;
     }
 
-    public TResult SendRequest<TResult>(JsonRequest request, int timeout = 30000)
+    public TResult SendRequest<TResult, TRequest>(TRequest request, int timeout = 30000) where TRequest : RequestBase
     {
         var tcs = new TaskCompletionSource<string>();
 
@@ -64,17 +67,13 @@ public class XrplClient
 
             if (task.IsCompleted)
             {
-                // Parse result
-                var response = JsonConvert.DeserializeObject<JsonResponse>(task.Result);
-
-                var responseString = JsonConvert.SerializeObject(response);
-                _logger.LogInformation($"Received response from XRPL: {responseString}");
+                _logger.LogInformation($"Received response from XRPL: {task.Result}");
 
                 // Throw exception on error
-                if (response.Error is not null) throw response.Error;
+                if (task.Exception is not null) throw task.Exception;
 
                 // Return result
-                return JsonConvert.DeserializeObject<TResult>(Convert.ToString(response.Result),
+                return JsonConvert.DeserializeObject<TResult>(Convert.ToString(task.Result),
                     new JsonSerializerSettings
                     {
                         Error = (sender, args) => args.ErrorContext.Handled = true
@@ -115,19 +114,16 @@ public class XrplClient
         _logger.LogInformation($"Incoming message data: {e.Data}");
 
         // Parse response from XRPL
-        var response = JsonConvert.DeserializeObject<JsonResponse>(e.Data,
+        var response = JsonConvert.DeserializeObject<ResponseBase>(e.Data,
             new JsonSerializerSettings()
             {
                 Error = (sender, args) => args.ErrorContext.Handled = true
             });
 
         // Check for an error
-        if (response?.Error != null)
+        if (response is null || response.Id < 1)
         {
-            // Log error deets
-            _logger.LogError($"Error message: {response.Error.message}");
-            _logger.LogError($"Error code: {response.Error.code}");
-            _logger.LogError($"Error data: {response.Error.data}");
+            _logger.LogError($"Null response: {response}");
         }
 
         // Set the response result

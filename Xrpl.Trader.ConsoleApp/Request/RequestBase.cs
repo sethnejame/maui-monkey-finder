@@ -5,7 +5,7 @@ namespace Xrpl.Trader.ConsoleApp.Request
     public class RequestBase
     {
         [JsonProperty("id")]
-        public string Id { get; set; }
+        public int Id { get; set; }
 
         [JsonProperty("command")]
         public string Command { get; set; }

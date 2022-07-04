@@ -12,12 +12,12 @@ public class NetworkService
         _client = client;
     }
 
-    public PingResponse SendPing(PingRequest ping)
+    public PingResponse SendPing()
     {
         Log.Debug("Pinging XRPL");
 
-        var request = _client.CreateRequest("ping", new { ping });
-        var response = _client.SendRequest<PingResponse>(request);
+        var request = _client.CreateRequest(new PingRequest() { Command = "ping" });
+        var response = _client.SendRequest<PingResponse, PingRequest>(request);
 
         Log.Debug($"Ping response received: {response}");
 
