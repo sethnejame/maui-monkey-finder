@@ -14,13 +14,12 @@ public class NetworkService
 
     public PingResponse SendPing()
     {
-        Log.Debug("Pinging XRPL");
-
         var request = _client.CreateRequest(new PingRequest() { Command = "ping" });
-        var response = _client.SendRequest<PingResponse, PingRequest>(request);
+        return _client.SendRequest<PingResponse, PingRequest>(request);
+    }
 
-        Log.Debug($"Ping response received: {response}");
+    public GetAccountInfoResponse GetAccountInfo(GetAccountInfoRequest request)
+    {
 
-        return response;
     }
 }
