@@ -1,24 +1,26 @@
 ﻿#pragma warning disable CS8604
 #pragma warning disable CS8603
-using Serilog;
 using WebSocketSharp;
 using Newtonsoft.Json;
 using AustinHarris.JsonRpc;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
 namespace Xrpl.Trader.ConsoleApp;
 
 public class XrplClient
 {
+    private readonly ILogger<App> _logger;
     private readonly WebSocket _webSocket;
     private static int _requestId;
     private static readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _responses = new();
     public int MaximumRequestId { get; set; } = 999999;
 
-    public XrplClient(WebSocket webSocket)
+    public XrplClient(WebSocket webSocket, ILogger<App> logger)
     {
         _webSocket = webSocket;
         _webSocket.OnMessage += ProcessMessage;
+        _logger = logger;
     }
 
     public JsonRequest CreateRequest(string method, object data)
@@ -51,9 +53,9 @@ public class XrplClient
             _responses.TryAdd(Convert.ToString(requestId), tcs);
 
             // Send request to ripple
-            Log.Verbose($"Sending request: {requestString}");
+            _logger.LogInformation($"Sending request: {requestString}");
             _webSocket.Send(requestString);
-            Log.Verbose("Request sent!");
+            _logger.LogInformation("Request sent!");
 
             var task = tcs.Task;
 
@@ -66,7 +68,7 @@ public class XrplClient
                 var response = JsonConvert.DeserializeObject<JsonResponse>(task.Result);
 
                 var responseString = JsonConvert.SerializeObject(response);
-                Log.Verbose($"Received response from XRPL: {responseString}");
+                _logger.LogInformation($"Received response from XRPL: {responseString}");
 
                 // Throw exception on error
                 if (response.Error is not null) throw response.Error;
@@ -80,13 +82,13 @@ public class XrplClient
             }
             else // Timeout response
             {
-                Log.Error($"Client timeout of {timeout} milliseconds has expired, throwing timeout exception");
+                _logger.LogError($"Client timeout of {timeout} milliseconds has expired, throwing timeout exception");
                 throw new TimeoutException();
             }
         }
         catch (Exception ex)
         {
-            Log.Error(ex, $"Something went wront while trying to send request: {requestString}");
+            _logger.LogError(ex, $"Something went wront while trying to send request: {requestString}");
             throw;
         }
         finally
@@ -101,16 +103,16 @@ public class XrplClient
         // Check for pings
         if (e.IsPing)
         {
-            Log.Verbose("Received ping");
+            _logger.LogInformation("Received ping");
             return;
         }
 
-        Log.Debug("Processing message");
+        _logger.LogInformation("Processing message");
 
         // Log when the message is binary
-        if (e.IsBinary) Log.Verbose("Incoming message type is binary");
+        if (e.IsBinary) _logger.LogInformation("Incoming message type is binary");
 
-        Log.Verbose($"Incoming message data: {e.Data}");
+        _logger.LogInformation($"Incoming message data: {e.Data}");
 
         // Parse response from XRPL
         var response = JsonConvert.DeserializeObject<JsonResponse>(e.Data,
@@ -123,9 +125,9 @@ public class XrplClient
         if (response?.Error != null)
         {
             // Log error deets
-            Log.Error($"Error message: {response.Error.message}");
-            Log.Error($"Error code: {response.Error.code}");
-            Log.Error($"Error data: {response.Error.data}");
+            _logger.LogError($"Error message: {response.Error.message}");
+            _logger.LogError($"Error code: {response.Error.code}");
+            _logger.LogError($"Error data: {response.Error.data}");
         }
 
         // Set the response result
@@ -135,9 +137,9 @@ public class XrplClient
         }
         else
         {
-            Log.Error($"Unexpected response received from XRPL for ID '{response.Id}'");
+            _logger.LogError($"Unexpected response received from XRPL for ID '{response.Id}'");
         }
 
-        Log.Debug("Finished processing incoming message from XRPL");
+        _logger.LogInformation("Finished processing incoming message from XRPL");
     }
 }

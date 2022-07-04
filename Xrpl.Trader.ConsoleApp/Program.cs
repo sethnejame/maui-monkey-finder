@@ -1,16 +1,34 @@
-﻿using WebSocketSharp;
-using Xrpl.Trader.ConsoleApp;
-using Xrpl.Trader.ConsoleApp.Request;
+﻿using Xrpl.Trader.ConsoleApp;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
-Console.WriteLine("***** Welcome to the XRPL Trader ConsoleApp *****");
+internal class Program
+{
+    static void Main(string[] args)
+    {
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        ServiceProvider serviceProvider = services.BuildServiceProvider();
+        App app = serviceProvider.GetService<App>();
 
-using var webSocket = new WebSocket("wss://s.altnet.rippletest.net:51233");
+        try
+        {
+            app.Start();
+        }
+        catch (Exception ex)
+        {
+            app.HandleError(ex);
+        }
+        finally
+        {
+            app.Stop();
+        }
+        Console.ReadLine();
+    }
 
-// Create the XRPL client
-var client = new XrplClient(webSocket);
-
-// Send ping request
-var networkService = new NetworkService(client);
-var response = networkService.SendPing(new PingRequest() { Command = "ping" });
-
-Console.ReadLine();
+    private static void ConfigureServices(ServiceCollection services)
+    {
+        services.AddLogging(configure => configure.AddConsole())
+        .AddTransient<App>();
+    }
+}
