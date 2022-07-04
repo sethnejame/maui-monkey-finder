@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿#pragma warning disable CS8602
+using System.Text;
 using Newtonsoft.Json;
 using XRPL.Core.Request;
 using System.Net.WebSockets;
@@ -31,7 +32,7 @@ public class XrplClient : IDisposable
             _cts = new CancellationTokenSource();
 
             await _ws.ConnectAsync(new Uri(xrplNetworkUrl), _cts.Token);
-            await Task.Factory.StartNew(ReceiveLoop, _cts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default)
+            await Task.Factory.StartNew(ReceiveLoop, _cts.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
             _logger.LogInformation($"Connected to XRPL via url '{xrplNetworkUrl}'");
         }
         catch (Exception ex)
@@ -81,7 +82,8 @@ public class XrplClient : IDisposable
                 ResponseReceive(outputStream);
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) 
+        { 
             _logger.LogError(ex, "XRPL client connection error while receiving server response");
         }
     }
