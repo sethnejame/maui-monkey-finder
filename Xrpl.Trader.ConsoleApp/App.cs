@@ -30,6 +30,8 @@ public class App
             var networkService = new NetworkService(client);
             var response = networkService.SendPing();
 
+            
+
             Console.ReadLine();
         }
         catch (Exception)

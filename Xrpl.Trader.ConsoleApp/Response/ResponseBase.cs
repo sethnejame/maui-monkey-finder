@@ -2,7 +2,7 @@
 
 namespace Xrpl.Trader.ConsoleApp.Response
 {
-    public class ResponseBase<T>
+    public class ResponseBase
     {
         [JsonProperty("id")]
         public int Id { get; set; }
@@ -10,7 +10,7 @@ namespace Xrpl.Trader.ConsoleApp.Response
         [JsonProperty("command")]
         public string Command { get; set; }
 
-        public T Result { get; set; }
+        public object Result { get; set; }
 
         public string Status { get; set; }
 
