@@ -30,7 +30,7 @@ public class App
             var networkService = new NetworkService(client);
             var response = networkService.SendPing();
 
-            
+            var accountResponse = networkService.GetAccountInfo("rKELKum8sAPsAqKSerVpSaKvyDw6sAACWf", true, "current", true);
 
             Console.ReadLine();
         }

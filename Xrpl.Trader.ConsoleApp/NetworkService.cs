@@ -11,13 +11,13 @@ public class NetworkService
         _client = client;
     }
 
-    public PingResponse SendPing()
+    public ResponseBase<PingResponse> SendPing()
     {
         var request = _client.CreateRequest(new PingRequest() { Command = "ping" });
         return _client.SendRequest<PingResponse, PingRequest>(request);
     }
 
-    public GetAccountInfoResponse GetAccountInfo(string account, bool strict, string ledgerIndex, bool queue)
+    public ResponseBase<GetAccountInfoResponse> GetAccountInfo(string account, bool strict, string ledgerIndex, bool queue)
     {
         var request = _client.CreateRequest(new GetAccountInfoRequest()
         {

@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using Xrpl.Trader.ConsoleApp.Request;
 using Xrpl.Trader.ConsoleApp.Response;
+using System.Text.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Xrpl.Trader.ConsoleApp;
 
@@ -42,13 +44,20 @@ public class XrplClient
         return data;
     }
 
-    public TResult SendRequest<TResult, TRequest>(TRequest request, int timeout = 30000) where TRequest : RequestBase
+    public ResponseBase<TResult> SendRequest<TResult, TRequest>(TRequest request, int timeout = 30000) where TRequest : RequestBase
     {
         var tcs = new TaskCompletionSource<string>();
 
         var requestId = request.Id;
 
-        var requestString = JsonConvert.SerializeObject(request);
+        // TODO-Seth build serializer wrapper
+        var requestString = JsonConvert.SerializeObject(request, new JsonSerializerSettings
+        {
+            ContractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new CamelCaseNamingStrategy()
+            },
+        });
 
         try
         {
@@ -73,7 +82,7 @@ public class XrplClient
                 if (task.Exception is not null) throw task.Exception;
 
                 // Return result
-                return JsonConvert.DeserializeObject<TResult>(Convert.ToString(task.Result),
+                return JsonConvert.DeserializeObject<ResponseBase<TResult>>(Convert.ToString(task.Result),
                     new JsonSerializerSettings
                     {
                         Error = (sender, args) => args.ErrorContext.Handled = true
@@ -114,7 +123,7 @@ public class XrplClient
         _logger.LogInformation($"Incoming message data: {e.Data}");
 
         // Parse response from XRPL
-        var response = JsonConvert.DeserializeObject<ResponseBase>(e.Data,
+        var response = JsonConvert.DeserializeObject<ResponseBase<object>>(e.Data,
             new JsonSerializerSettings()
             {
                 Error = (sender, args) => args.ErrorContext.Handled = true
