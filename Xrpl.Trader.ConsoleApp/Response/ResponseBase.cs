@@ -1,19 +1,16 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Xrpl.Trader.ConsoleApp.Response
 {
-    public class ResponseBase
+    public class ResponseBase<T>
     {
         [JsonProperty("id")]
         public int Id { get; set; }
 
         [JsonProperty("command")]
         public string Command { get; set; }
+
+        public T Result { get; set; }
 
         public string Status { get; set; }
 
