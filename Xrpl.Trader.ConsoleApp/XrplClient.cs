@@ -1,13 +1,11 @@
 ﻿#pragma warning disable CS8604
 #pragma warning disable CS8603
 using WebSocketSharp;
-using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using Xrpl.Trader.ConsoleApp.Request;
 using Xrpl.Trader.ConsoleApp.Response;
-using System.Text.Json;
-using Newtonsoft.Json.Serialization;
+using static Xrpl.Trader.ConsoleApp.Utility.Serialization;
 
 namespace Xrpl.Trader.ConsoleApp;
 
@@ -50,14 +48,7 @@ public class XrplClient
 
         var requestId = request.Id;
 
-        // TODO-Seth build serializer wrapper
-        var requestString = JsonConvert.SerializeObject(request, new JsonSerializerSettings
-        {
-            ContractResolver = new DefaultContractResolver
-            {
-                NamingStrategy = new CamelCaseNamingStrategy()
-            },
-        });
+        var requestString = Serialize(request);
 
         try
         {
@@ -82,11 +73,7 @@ public class XrplClient
                 if (task.Exception is not null) throw task.Exception;
 
                 // Return result
-                return JsonConvert.DeserializeObject<ResponseBase<TResult>>(Convert.ToString(task.Result),
-                    new JsonSerializerSettings
-                    {
-                        Error = (sender, args) => args.ErrorContext.Handled = true
-                    });
+                return Deserialize<ResponseBase<TResult>>(Convert.ToString(task.Result));
             }
             else // Timeout response
             {
@@ -123,11 +110,7 @@ public class XrplClient
         _logger.LogInformation($"Incoming message data: {e.Data}");
 
         // Parse response from XRPL
-        var response = JsonConvert.DeserializeObject<ResponseBase<object>>(e.Data,
-            new JsonSerializerSettings()
-            {
-                Error = (sender, args) => args.ErrorContext.Handled = true
-            });
+        var response = Deserialize<ResponseBase<object>>(e.Data);
 
         // Check for an error
         if (response is null || response.Id < 1)
