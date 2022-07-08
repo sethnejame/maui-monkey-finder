@@ -2,9 +2,10 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:model="clr-namespace:MonkeyFinder.Model"
-             x:Class="MonkeyFinder.View.MainPage">
+             x:Class="MonkeyFinder.View.MainPage"
+             Title="{Binding Title}">
 
-    <CollectionView>
+    <CollectionView IsVisible="{Binding IsNotBusy}">
         <CollectionView.ItemsSource>
             <x:Array Type="{x:Type model:Monkey}">
                 <model:Monkey 
