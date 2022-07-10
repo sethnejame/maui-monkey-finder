@@ -15,7 +15,7 @@ public class BaseViewModel : INotifyPropertyChanged
             _isBusy = value;
             //OnPropertyChanged(nameof(IsBusy)); We use CallerMemberName attr below to automatically ref. name of prop, gets set at compile time
             OnPropertyChanged();
-            OnPropertyChanged(nameof(IstNotBusy));
+            OnPropertyChanged(nameof(IsNotBusy));
         }
     }
 
@@ -31,7 +31,7 @@ public class BaseViewModel : INotifyPropertyChanged
         }
     }
 
-    public bool IstNotBusy => !IsBusy;
+    public bool IsNotBusy => !IsBusy;
 
     public event PropertyChangedEventHandler PropertyChanged;
 
