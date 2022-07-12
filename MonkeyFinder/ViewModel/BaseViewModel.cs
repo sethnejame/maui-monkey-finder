@@ -1,42 +1,13 @@
 ﻿namespace MonkeyFinder.ViewModel;
 
-public class BaseViewModel : INotifyPropertyChanged
+public partial class BaseViewModel : ObservableObject
 {
-    bool _isBusy;
-    string _title;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotBusy))]
+    bool isBusy;
 
-    public bool IsBusy
-    {
-        get => _isBusy;
-        set
-        {
-            if (_isBusy == value) return;
-
-            _isBusy = value;
-            //OnPropertyChanged(nameof(IsBusy)); We use CallerMemberName attr below to automatically ref. name of prop, gets set at compile time
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsNotBusy));
-        }
-    }
-
-    public string Title
-    {
-        get => _title;
-        set
-        {
-            if (_title == value) return;
-
-            _title = value;
-            OnPropertyChanged();
-        }
-    }
+    [ObservableProperty]
+    string title;
 
     public bool IsNotBusy => !IsBusy;
-
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    public void OnPropertyChanged([CallerMemberName] string name = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
 }
